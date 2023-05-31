@@ -1,43 +1,51 @@
 'use client';
-import React from 'react';
-import { GoogleMap, useLoadScript } from '@react-google-maps/api';
+import React, { useEffect, useState } from 'react';
+import { useLoadScript } from '@react-google-maps/api';
 import SearchBar from './SearchBar';
-
-const Map = () => {
-  const containerStyle = {
-    width: '75vw',
-    height: '100vh',
-  };
-  const center = { lat: 44, lng: -80 };
-  const mapOptions = {
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      mapTypeIds: [],
-    },
-  };
-  return (
-    <div className="z-0 w-[75%] h-full">
-      <GoogleMap
-        zoom={10}
-        center={center}
-        mapContainerStyle={containerStyle}
-        options={mapOptions}
-      ></GoogleMap>
-    </div>
-  );
-};
+import ParkingList from './ParkingList';
+import Map from './Map';
+import { getCarparks } from 'utils/getCarparks';
+import { getToken } from 'utils/getToken';
+import { CarparkType, CoordinatesType } from 'types/types';
 
 const MapComponent = () => {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'NO_API_KEY',
   });
+
+  const [allCarparks, setAllCarparks] = useState<CarparkType[]>([]);
+  const [currentLocation, setCurrentLocation] = useState<CoordinatesType>();
+
+  const getAllCarparks = async () => {
+    const token = await getToken();
+    // const cookies = new Cookies();
+    // cookies.set('token', token, { maxAge: 3600 });
+
+    const carparks = await getCarparks(token);
+    setAllCarparks(carparks.slice(0, 10));
+  };
+
+  useEffect(() => {
+    getAllCarparks();
+    // Get the current location using Geolocation API
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCurrentLocation({ lat: latitude, lng: longitude });
+      },
+      (error) => {
+        console.error('Error getting current location:', error);
+      },
+    );
+  }, []);
+
   if (!isLoaded) return <div>Loading...</div>;
   return (
     <div className="flex flex-row relative z-0">
-      <Map />
+      <Map carparks={allCarparks} currentLocation={currentLocation} />
       <SearchBar />
-      <div>Parking List</div>
+      <ParkingList carparks={allCarparks} />
     </div>
   );
 };
