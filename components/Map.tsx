@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
+import { Marker, OverlayView } from '@react-google-maps/api';
 import { CarparkType, CoordinatesType } from 'types/types';
 import { parseCoordinates } from 'utils/utils';
 
@@ -12,7 +12,7 @@ interface CustomMarkerProps {
 
 interface CarparkListProps {
   carparks: CarparkType[];
-  currentLocation?: CoordinatesType;
+  coordinates?: CoordinatesType;
 }
 
 const CustomMarker = ({ lat, lng, details }: CustomMarkerProps) => (
@@ -43,42 +43,24 @@ const CustomMarker = ({ lat, lng, details }: CustomMarkerProps) => (
   </OverlayView>
 );
 
-const Map = ({ carparks, currentLocation }: CarparkListProps) => {
-  const containerStyle = {
-    width: '75vw',
-    height: '100vh',
-  };
-  const center = currentLocation ? currentLocation : { lat: 44, lng: -80 };
+const Map = ({ carparks }: CarparkListProps) => {
   const markerCoordinates: CoordinatesType[] = carparks.map((carpark) =>
     parseCoordinates(carpark.geometries[0]),
   );
-  const mapOptions = {
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      mapTypeIds: [],
-    },
-  };
   return (
     <div className="z-0 w-[75%] h-full">
-      <GoogleMap
-        zoom={10}
-        center={center}
-        mapContainerStyle={containerStyle}
-        options={mapOptions}
-      >
-        {markerCoordinates.map((coordinate, i) => (
-          <Marker
-            key={`${coordinate.lat}${coordinate.lng}${i}`}
-            position={{ lat: coordinate.lat, lng: coordinate.lng }}
-          >
-            <CustomMarker
-              lat={coordinate.lat}
-              lng={coordinate.lng}
-              details="parking"
-            />
-          </Marker>
-        ))}
-      </GoogleMap>
+      {markerCoordinates.map((coordinate, i) => (
+        <Marker
+          key={`${coordinate.lat}${coordinate.lng}${i}`}
+          position={{ lat: coordinate.lat, lng: coordinate.lng }}
+        >
+          <CustomMarker
+            lat={coordinate.lat}
+            lng={coordinate.lng}
+            details="parking"
+          />
+        </Marker>
+      ))}
     </div>
   );
 };

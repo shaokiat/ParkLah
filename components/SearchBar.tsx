@@ -1,5 +1,8 @@
 'use client';
+import { Autocomplete } from '@react-google-maps/api';
 import React, { ReactNode, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { CoordinatesType } from 'types/types';
 
 type ModalProps = {
   isOpen: boolean;
@@ -11,7 +14,7 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
     display: isOpen ? 'block' : 'none',
     position: 'fixed',
     zIndex: 9999,
-    top: '30%',
+    top: '40%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
     backgroundColor: '#fff',
@@ -32,28 +35,72 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
   };
 
   return (
-    <>
+    <div className="">
       <div style={modalStyle}>
+        <button
+          className="absolute top-0 right-0 p-2 hover:bg-gray-200 rounded-full focus:outline-none"
+          onClick={onClose}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {children}
-        <button onClick={onClose}>Close</button>
       </div>
       <div style={backdropStyle} onClick={onClose} />
-    </>
+    </div>
   );
 };
 
-const SearchBar = () => {
+interface SearchBarProps {
+  setCoordinates: React.Dispatch<
+    React.SetStateAction<CoordinatesType | undefined>
+  >;
+}
+
+const SearchBar = ({ setCoordinates }: SearchBarProps) => {
+  const { handleSubmit } = useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCoords, setSelectedCoords] = useState<CoordinatesType>();
+  const autocompleteRef = React.useRef<google.maps.places.Autocomplete | null>(
+    null,
+  );
+
+  const onSubmit = () => {
+    setCoordinates(selectedCoords);
+    setIsModalOpen(false);
+  };
 
   const openModal = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    console.log('open');
     setIsModalOpen(true);
   };
   const closeModal = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    console.log('close');
     setIsModalOpen(false);
+  };
+
+  const handlePlaceSelect = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry?.location) {
+        const { lat, lng } = place.geometry.location;
+        console.log(lat(), lng());
+        setSelectedCoords({ lat: lat(), lng: lng() });
+      }
+    }
   };
 
   return (
@@ -84,8 +131,30 @@ const SearchBar = () => {
         </div>
       </button>
       <Modal isOpen={isModalOpen} onClose={(event) => closeModal(event)}>
-        <h2>Modal Content</h2>
-        <p>This is the content of the modal.</p>
+        <form className="" onSubmit={handleSubmit(onSubmit)}>
+          <div className="w-64">
+            <label htmlFor="address">Where are you going?</label>
+            <Autocomplete
+              onLoad={(autocomplete) => {
+                autocompleteRef.current = autocomplete;
+                autocomplete.setFields(['geometry']);
+              }}
+              onPlaceChanged={handlePlaceSelect}
+            >
+              <input
+                type="text"
+                className="w-full px-4 py-2 mb-4 text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400"
+                placeholder="Address, postal code..."
+              />
+            </Autocomplete>
+            <button
+              type="submit"
+              className="text-white w-full mt-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-md px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >
+              Find Parking
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

@@ -12,3 +12,7 @@ export type CarparkType = {
   parkCapacity: number;
   geometries: Array<CoordinatesString>;
 };
+
+export type SearchFormType = {
+  address: string;
+};
