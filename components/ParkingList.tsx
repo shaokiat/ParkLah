@@ -7,7 +7,7 @@ interface CarparkListProps {
 
 const ParkingList = ({ carparks }: CarparkListProps) => {
   return (
-    <div>
+    <div className="h-screen overflow-auto">
       {carparks.map((carpark, i) => (
         <div key={i}>{carpark.ppName}</div>
       ))}

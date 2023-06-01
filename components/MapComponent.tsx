@@ -1,12 +1,13 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Autocomplete, GoogleMap, useLoadScript } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript } from '@react-google-maps/api';
 import SearchBar from './SearchBar';
 import ParkingList from './ParkingList';
 import Map from './Map';
-import { getCarparks } from 'utils/getCarparks';
-import { getToken } from 'utils/getToken';
 import { CarparkType, CoordinatesType } from 'types/types';
+import { filterCarparks } from 'utils/utils';
+
+const RADIUS_TO_FILTER = 3;
 
 const containerStyle = {
   width: '75vw',
@@ -20,28 +21,31 @@ const mapOptions = {
   },
 };
 
-const MapComponent = () => {
+const libraries: (
+  | 'drawing'
+  | 'geometry'
+  | 'localContext'
+  | 'places'
+  | 'visualization'
+)[] = ['places'];
+
+interface MapComponentProps {
+  allCarparks: CarparkType[];
+}
+
+const MapComponent = ({ allCarparks }: MapComponentProps) => {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'NO_API_KEY',
-    libraries: ['places'],
+    libraries: libraries,
   });
 
-  const [allCarparks, setAllCarparks] = useState<CarparkType[]>([]);
+  const [carparks, setCarparks] = useState<CarparkType[]>([]);
   const [coordinates, setCoordinates] = useState<CoordinatesType>();
 
   if (coordinates === null) {
     setCoordinates({ lat: 1.3139946, lng: 103.6794405 });
   }
-
-  const getAllCarparks = async () => {
-    const token = await getToken();
-    // const cookies = new Cookies();
-    // cookies.set('token', token, { maxAge: 3600 });
-
-    const carparks = await getCarparks(token);
-    setAllCarparks(carparks.slice(0, 10));
-  };
 
   const setLiveLocation = () => {
     // Get the current location using Geolocation API
@@ -58,9 +62,19 @@ const MapComponent = () => {
   };
 
   useEffect(() => {
-    getAllCarparks();
     setLiveLocation();
   }, []);
+
+  useEffect(() => {
+    if (coordinates !== undefined) {
+      const filteredCarparks = filterCarparks(
+        allCarparks,
+        coordinates,
+        RADIUS_TO_FILTER,
+      );
+      setCarparks(filteredCarparks);
+    }
+  }, [allCarparks, coordinates]);
 
   if (!isLoaded) return <div>Loading...</div>;
   return (
@@ -71,12 +85,12 @@ const MapComponent = () => {
         mapContainerStyle={containerStyle}
         options={mapOptions}
       >
-        <Map carparks={allCarparks} coordinates={coordinates} />
+        <Map carparks={carparks} coordinates={coordinates} />
         <SearchBar setCoordinates={setCoordinates} />
       </GoogleMap>
-      <ParkingList carparks={allCarparks} />
+      <ParkingList carparks={carparks} />
     </div>
   );
 };
 
-export default MapComponent;
+export default React.memo(MapComponent);
