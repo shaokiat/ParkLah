@@ -7,6 +7,11 @@ export type CoordinatesType = {
 };
 
 export type CarparkType = {
+  weekdayMin: string;
+  weekdayRate: string;
+  satdayMin: string;
+  startTime: string;
+  endTime: string;
   ppCode: string;
   ppName: string;
   parkCapacity: number;

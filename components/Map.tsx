@@ -24,43 +24,29 @@ const CustomMarker = ({ lat, lng, details }: CustomMarkerProps) => (
       y: -(height / 2),
     })}
   >
-    <div
-      style={{
-        position: 'absolute',
-        display: 'inline-block',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        fontSize: '14px',
-        padding: '4px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        borderRadius: '4px',
-        whiteSpace: 'nowrap',
-      }}
-    >
+    <div className="absolute right-[25px] bottom-[10px] p-1 inline-block text-center font-bold text-[14px] bg-gray-700 text-white rounded-md">
       {details}
     </div>
   </OverlayView>
 );
 
-const Map = ({ carparks }: CarparkListProps) => {
-  const markerCoordinates: CoordinatesType[] = carparks.map((carpark) =>
-    parseCoordinates(carpark.geometries[0]),
-  );
+const Map = ({ carparks, coordinates }: CarparkListProps) => {
   return (
     <div className="z-0 w-[75%] h-full">
-      {markerCoordinates.map((coordinate, i) => (
-        <Marker
-          key={`${coordinate.lat}${coordinate.lng}${i}`}
-          position={{ lat: coordinate.lat, lng: coordinate.lng }}
-        >
+      {coordinates && (
+        <Marker position={{ lat: coordinates.lat, lng: coordinates.lng }} />
+      )}
+      {carparks.map((carpark, i) => {
+        const coordinate = parseCoordinates(carpark.geometries[0]);
+        return (
           <CustomMarker
+            key={`${coordinate.lat}${coordinate.lng}${i}`}
             lat={coordinate.lat}
             lng={coordinate.lng}
-            details="parking"
+            details={`${carpark.weekdayRate}`}
           />
-        </Marker>
-      ))}
+        );
+      })}
     </div>
   );
 };
